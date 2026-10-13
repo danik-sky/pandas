@@ -28,7 +28,10 @@ class Table:
                 writer = csv.writer(fw)
                 writer.writerow(col)
                 writer.writerows(lin)
+        else:
+            with open(name, 'wb') as fw:
+                pickle.dump(self.tabl, fw)
 
 example = Table()
 example.tabl = {'Namrfrfrrfrrfrfes': ['Tipok', 'Tipok2'], 'Ages': [89, 67]}
-example.save_table('Lol.csv')
+example.save_table('Lol.pickle')
