@@ -65,6 +65,22 @@ class Table:
         else:
             self.tabl = ct
             print("Сохранено в исходную таблицу")
+    def get_rows_by_index(self, *vals, copy_table=False):
+        ct={}
+        for k in self.tabl.keys():
+            ct[k]=[]
+        for v in vals:
+            val = list(self.tabl.values())
+            for i in range(len(val[0])):
+                if val[0][i] == v:
+                    for k, elem in self.tabl.items():
+                        ct[k].append(elem[i])
+        if copy_table == True:
+            self.copy_tabl = ct
+            print("Сохранено в таблицу copy_tabl")
+        else:
+            self.tabl = ct
+            print("Сохранено в исходную таблицу")
 
 example = Table()
 example.tabl = {'Namrfrfrrfrrfrfes': ['Tipok', 'Tipok2', 'Tip3', 'Tip4', 'Tip5'], 'Ages': [89, 67, 87, 9, 76]}
@@ -75,5 +91,7 @@ example.load_table('Lol1.csv')
 print(example.tabl)
 example.get_rows_by_number(1, 3, True)
 print(example.copy_tabl)
-example.get_rows_by_number(2, 5)
+example.get_rows_by_index('Tipok', 'Tip4', copy_table=True)
+print(example.copy_tabl)
+example.get_rows_by_index('Tip3', 'Tip4', 'Tipok')
 print(example.tabl)
