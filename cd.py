@@ -1,6 +1,21 @@
 import csv
 import pickle
 
+def converter(s):
+    sbool = s.strip().lower()
+    if sbool in ('true', 'false'):
+        res = sbool == 'true'
+        return res
+    try:
+        res = int(s)
+        return res
+    except ValueError:
+        try:
+            res = float(s)
+            return res
+        except:
+            return s
+
 class Table:
     def save_table(self, name):
         if name[-3:] == 'txt':
@@ -43,8 +58,7 @@ class Table:
                     for col in reader.fieldnames:
                         val = lin[col]
                         if val!=None:
-                            if val.isdigit():
-                                val = int(val)
+                            val = converter(val)
                             self.tabl[col].append(val)
         else:
             with open(name, 'rb') as fw:
@@ -81,17 +95,41 @@ class Table:
         else:
             self.tabl = ct
             print("Сохранено в исходную таблицу")
+    def get_column_types(self, by_number=True):
+        ct = {}
+        for k in self.tabl.keys():
+            ct[k]=[]
+        for k, val in self.tabl.items():
+            for elem in val:
+                match type(elem).__name__:
+                    case 'int':
+                        ct[k].append('int')
+                    case 'float':
+                        ct[k].append('float')
+                    case 'bool':
+                        ct[k].append('bool')
+                    case 'str':
+                        ct[k].append('str')
+        self.columns = {}
+        if by_number == True:
+            keys_index = list(self.tabl.keys())
+            for k in self.tabl.keys():
+                self.columns[keys_index.index(k)] = ct[k]
+        else:
+            for i in self.tabl.keys():
+                self.columns[i] = ct[i]
+        print("Словарь сохранён в columns")
 
 example = Table()
-example.tabl = {'Namrfrfrrfrrfrfes': ['Tipok', 'Tipok2', 'Tip3', 'Tip4', 'Tip5'], 'Ages': [89, 67, 87, 9, 76]}
+example.tabl = {'Namrfrfrrfrrfrfes': ['Tipok', 'Tipok2', 3.14, 'Tip4', 'Tip5'], 'Ages': [89, False, 87, 0.9, 76]}
 example.save_table('Lol1.csv')
 example.load_table('Lol.pickle')
 print(example.tabl)
 example.load_table('Lol1.csv')
 print(example.tabl)
-example.get_rows_by_number(1, 3, True)
+example.get_rows_by_number(1, 3, copy_table=True)
 print(example.copy_tabl)
-example.get_rows_by_index('Tipok', 'Tip4', copy_table=True)
-print(example.copy_tabl)
-example.get_rows_by_index('Tip3', 'Tip4', 'Tipok')
-print(example.tabl)
+example.get_column_types()
+print(example.columns)
+example.get_column_types(by_number=False)
+print(example.columns)
