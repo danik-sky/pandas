@@ -31,6 +31,7 @@ class Table:
         else:
             with open(name, 'wb') as fw:
                 pickle.dump(self.tabl, fw)
+        print(f"Сохранено в файл {name}")
     def load_table(self,name):
         if name[-3:]=='csv':
             self.tabl={}
@@ -48,8 +49,31 @@ class Table:
         else:
             with open(name, 'rb') as fw:
                 self.tabl = pickle.load(fw)
+        print("Загружено в таблицу tabl")
+    def get_rows_by_number(self, start, stop=0, copy_table=False):
+        if stop == 0:
+            stop = start + 1
+        ct = {}
+        for k in self.tabl.keys():
+            ct[k]=[]
+        for i in range(start, stop):
+            for k, val in self.tabl.items():
+                ct[k].append(val[i])
+        if copy_table == True:
+            self.copy_tabl = ct
+            print("Сохранено в таблицу copy_tabl")
+        else:
+            self.tabl = ct
+            print("Сохранено в исходную таблицу")
 
 example = Table()
-example.tabl = {'Namrfrfrrfrrfrfes': ['Tipok', 'Tipok2'], 'Ages': [89, 67, 87]}
+example.tabl = {'Namrfrfrrfrrfrfes': ['Tipok', 'Tipok2', 'Tip3', 'Tip4', 'Tip5'], 'Ages': [89, 67, 87, 9, 76]}
+example.save_table('Lol1.csv')
 example.load_table('Lol.pickle')
+print(example.tabl)
+example.load_table('Lol1.csv')
+print(example.tabl)
+example.get_rows_by_number(1, 3, True)
+print(example.copy_tabl)
+example.get_rows_by_number(2, 5)
 print(example.tabl)
