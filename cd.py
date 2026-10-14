@@ -45,8 +45,11 @@ class Table:
                             if val.isdigit():
                                 val = int(val)
                             self.tabl[col].append(val)
+        else:
+            with open(name, 'rb') as fw:
+                self.tabl = pickle.load(fw)
 
 example = Table()
-example.tabl = {'Namrfrfrrfrrfrfes': ['Tipok', 'Tipok2'], 'Ages': [89, 67]}
-example.load_table('Lol.csv')
+example.tabl = {'Namrfrfrrfrrfrfes': ['Tipok', 'Tipok2'], 'Ages': [89, 67, 87]}
+example.load_table('Lol.pickle')
 print(example.tabl)
