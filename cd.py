@@ -60,6 +60,13 @@ class Table:
                         if val!=None:
                             val = converter(val)
                             self.tabl[col].append(val)
+            for k, vals in self.tabl.items():
+                f = True
+                for v in vals:
+                    if type(self.tabl[k][0]) != type(v):
+                        f = False
+                if f == False:
+                    self.tabl[k] = [str(v) for v in vals]
         else:
             with open(name, 'rb') as fw:
                 self.tabl = pickle.load(fw)
@@ -97,19 +104,8 @@ class Table:
             print("Сохранено в исходную таблицу")
     def get_column_types(self, by_number=True):
         ct = {}
-        for k in self.tabl.keys():
-            ct[k]=[]
-        for k, val in self.tabl.items():
-            for elem in val:
-                match type(elem).__name__:
-                    case 'int':
-                        ct[k].append('int')
-                    case 'float':
-                        ct[k].append('float')
-                    case 'bool':
-                        ct[k].append('bool')
-                    case 'str':
-                        ct[k].append('str')
+        for k, vals in self.tabl.items():
+            ct[k]=type(vals[0]).__name__
         self.columns = {}
         if by_number == True:
             keys_index = list(self.tabl.keys())
@@ -121,7 +117,7 @@ class Table:
         print("Словарь сохранён в columns")
 
 example = Table()
-example.tabl = {'Namrfrfrrfrrfrfes': ['Tipok', 'Tipok2', 3.14, 'Tip4', 'Tip5'], 'Ages': [89, False, 87, 0.9, 76]}
+example.tabl = {'Namrfrfrrfrrfrfes': ['False', 'True', 'True', 'False'], 'Ages': [89, 99, 0.9, 56, 76]}
 example.save_table('Lol1.csv')
 example.load_table('Lol.pickle')
 print(example.tabl)
