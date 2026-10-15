@@ -164,10 +164,15 @@ class Table:
         else:
             keys_index = list(self.tabl.keys())
             return self.tabl[keys_index[column]]
-                
+    def get_value(self, column=0):
+        if isinstance(column, str):
+            return self.tabl[column][0]
+        else:
+            keys_index = list(self.tabl.keys())
+            return self.tabl[keys_index[column]][0]
+
 example = Table()
-example.tabl = {'Namrfrfrrfrrfrfes': ['False', 'True', 'True', 'False'], 'Ages': ['89', '99', '9', '56', '76']}
-copy = example.get_rows_by_number(1,3,copy_table=True)
+example.tabl = {'Namrfrfrrfrrfrfes': [False], 'Ages': ['89']}
 columns = example.get_column_types(by_number=True)
-gval = example.get_values(1)
-print(copy, columns, gval)
+gval = example.get_value()
+print(columns, gval)
