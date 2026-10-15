@@ -115,7 +115,48 @@ class Table:
             for i in self.tabl.keys():
                 self.columns[i] = ct[i]
         print("Словарь сохранён в columns")
-
+    def set_column_types(self, types_dict, by_number=True):
+        if by_number == True:
+            ct = {}
+            keys_index = list(self.tabl.keys())
+            for k, v in types_dict.items():
+                ct[keys_index[k]] = v
+            types_dict = ct
+        for k, v in types_dict.items():
+            vals = self.tabl[k]
+            match v:
+                case 'str':
+                    vals = [str(x) for x in vals]
+                case 'int':
+                    try:
+                        vals = [int(x) for x in vals]
+                    except:
+                        print("Ошибка: невозможно привести элементы таблицы к типу int")
+                case 'float':
+                    try:
+                        vals = [float(x) for x in vals]
+                    except:
+                        print("Ошибка: невозможно привести элементы таблицы к типу float")
+                case 'bool':
+                    try:
+                        new_vals = []
+                        for x in vals:
+                            if isinstance(x, str):
+                                xbool = x.strip().lower()
+                                if xbool in ('true', '1'):
+                                    new_vals.append(True)
+                                elif xbool in ('false', '0'):
+                                    new_vals.append(False)
+                                else:
+                                    raise ValueError("Ошибка: невозможно привести элементы таблицы к типу float")
+                            else:
+                                new_vals.append(bool(x))
+                        vals = new_vals
+                    except:
+                        print("Ошибка: невозможно привести элементы таблицы к типу bool")
+            self.tabl[k]=vals
+        print("Типы элементов таблицы изменены")
+                
 example = Table()
 example.tabl = {'Namrfrfrrfrrfrfes': ['False', 'True', 'True', 'False'], 'Ages': [89, 99, 0.9, 56, 76]}
 example.save_table('Lol1.csv')
@@ -129,3 +170,8 @@ example.get_column_types()
 print(example.columns)
 example.get_column_types(by_number=False)
 print(example.columns)
+example.tabl = {'Namrfrfrrfrrfrfes': ['False', 'True', 'True', 'False'], 'Ages': ['89', '99', '9', '56', '76']}
+example.get_column_types(by_number=True)
+print(example.columns)
+example.set_column_types({0: 'bool', 1: 'int'}, by_number=True)
+print(example.tabl)
