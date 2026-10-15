@@ -81,20 +81,12 @@ class Table:
             for k, val in self.tabl.items():
                 ct[k].append(val[i])
         if copy_table == True:
-<<<<<<< HEAD
             print("Копия таблицы сохранена")
             return ct
         else:
             self.tabl = ct
             print("Сохранено в исходную таблицу")
             return self.tabl
-=======
-            self.copy_tabl = ct
-            print("Сохранено в таблицу copy_tabl")
-        else:
-            self.tabl = ct
-            print("Сохранено в исходную таблицу")
->>>>>>> 8f4ae3e1d45769465e920309cc045917d2d5cf38
     def get_rows_by_index(self, *vals, copy_table=False):
         ct={}
         for k in self.tabl.keys():
@@ -106,25 +98,16 @@ class Table:
                     for k, elem in self.tabl.items():
                         ct[k].append(elem[i])
         if copy_table == True:
-<<<<<<< HEAD
             print("Копия таблицы сохранена")
             return ct
         else:
             self.tabl = ct
             print("Сохранено в исходную таблицу")
             return self.tabl
-=======
-            self.copy_tabl = ct
-            print("Сохранено в таблицу copy_tabl")
-        else:
-            self.tabl = ct
-            print("Сохранено в исходную таблицу")
->>>>>>> 8f4ae3e1d45769465e920309cc045917d2d5cf38
     def get_column_types(self, by_number=True):
         ct = {}
         for k, vals in self.tabl.items():
             ct[k]=type(vals[0]).__name__
-<<<<<<< HEAD
         columns = {}
         if by_number == True:
             keys_index = list(self.tabl.keys())
@@ -134,17 +117,6 @@ class Table:
             for i in self.tabl.keys():
                 columns[i] = ct[i]
         return columns
-=======
-        self.columns = {}
-        if by_number == True:
-            keys_index = list(self.tabl.keys())
-            for k in self.tabl.keys():
-                self.columns[keys_index.index(k)] = ct[k]
-        else:
-            for i in self.tabl.keys():
-                self.columns[i] = ct[i]
-        print("Словарь сохранён в columns")
->>>>>>> 8f4ae3e1d45769465e920309cc045917d2d5cf38
     def set_column_types(self, types_dict, by_number=True):
         if by_number == True:
             ct = {}
@@ -188,27 +160,7 @@ class Table:
         print("Типы элементов таблицы изменены")
                 
 example = Table()
-<<<<<<< HEAD
 example.tabl = {'Namrfrfrrfrrfrfes': ['False', 'True', 'True', 'False'], 'Ages': ['89', '99', '9', '56', '76']}
 example.copy = example.get_rows_by_number(1,3,copy_table=True)
 example.columns = example.get_column_types(by_number=True)
 print(example.copy, example.columns)
-=======
-example.tabl = {'Namrfrfrrfrrfrfes': ['False', 'True', 'True', 'False'], 'Ages': [89, 99, 0.9, 56, 76]}
-example.save_table('Lol1.csv')
-example.load_table('Lol.pickle')
-print(example.tabl)
-example.load_table('Lol1.csv')
-print(example.tabl)
-example.get_rows_by_number(1, 3, copy_table=True)
-print(example.copy_tabl)
-example.get_column_types()
-print(example.columns)
-example.get_column_types(by_number=False)
-print(example.columns)
-example.tabl = {'Namrfrfrrfrrfrfes': ['False', 'True', 'True', 'False'], 'Ages': ['89', '99', '9', '56', '76']}
-example.get_column_types(by_number=True)
-print(example.columns)
-example.set_column_types({0: 'bool', 1: 'int'}, by_number=True)
-print(example.tabl)
->>>>>>> 8f4ae3e1d45769465e920309cc045917d2d5cf38
