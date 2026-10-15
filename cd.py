@@ -170,9 +170,24 @@ class Table:
         else:
             keys_index = list(self.tabl.keys())
             return self.tabl[keys_index[column]][0]
+    def set_values(self, values, column=0):
+        if isinstance(column, str):
+            identifier = eval(self.get_column_types(by_number=False)[column])
+            try:
+                self.tabl[column] = [identifier(x) for x in values]
+            except:
+                print("Невозможно преобразовать данные к исходному типу")
+        else:
+            identifier = eval(self.get_column_types(by_number=True)[column])
+            keys_index = list(self.tabl.keys())
+            try:
+                self.tabl[keys_index[column]] = [identifier(x) for x in values]
+            except:
+                print("Невозможно преобразовать данные к исходному типу")
 
 example = Table()
-example.tabl = {'Namrfrfrrfrrfrfes': [False], 'Ages': ['89']}
+example.tabl = {'Namrfrfrrfrrfrfes': [False, True, True, False], 'Ages': [89, 97, 32, 6], 'Country': ['Iolklkl', 'sdhjshdjfk', 'g', 'jkl'], 'Coef': [0.7, 12.56, 34.3, 2.0]}
+example.save_table('TXT.txt')
 columns = example.get_column_types(by_number=True)
-gval = example.get_value()
-print(columns, gval)
+example.set_values(['76', '23', '32', '444'], 1)
+print(columns, example.tabl)
