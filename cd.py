@@ -198,9 +198,26 @@ class Table:
                 self.tabl[keys_index[column]] = [identifier(value)]
             except:
                 print("Невозможно преобразовать данные к исходному типу")    
+    def print_table(self):
+        wid = {}
+        for nm, val in self.tabl.items():
+            maxl = len(str(nm))
+            for i in val:
+                if len(str(i)) > maxl:
+                    maxl = len(str(i))
+            wid[nm] = maxl + 2
+        sr = "\n"
+        for col in self.tabl.keys():
+            sr += "{:<{width}}".format(str(col), width=wid[col])
+        sr+='\n'
+        for i in range(len(self.tabl.values())):
+            for col, lin in self.tabl.items():
+                sr += "{:<{width}}".format(str(lin[i]), width=wid[col])
+            sr+='\n'
+        print(sr)
 
 example = Table()
-example.tabl = {'Namrfrfrrfrrfrfes': [False], 'Ages': [89], 'Country': ['Iolklkl'], 'Coef': [0.7]}
+example.tabl = {'Namrfrfrrfrrfrfes': [False, True, True, False], 'Ages': [89, 97, 32, 6], 'Country': ['Iolklkl', 'sdhjshdjfk', 'g', 'jkl'], 'Coef': [0.7, 12.56, 34.3, 2.0]}
 columns = example.get_column_types(by_number=True)
-example.set_value('76', 1)
-print(columns, example.tabl)
+print(columns)
+example.print_table()
