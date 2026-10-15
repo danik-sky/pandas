@@ -158,9 +158,16 @@ class Table:
                         print("Ошибка: невозможно привести элементы таблицы к типу bool")
             self.tabl[k]=vals
         print("Типы элементов таблицы изменены")
+    def get_values(self, column=0):
+        if isinstance(column, str):
+            return self.tabl[column]
+        else:
+            keys_index = list(self.tabl.keys())
+            return self.tabl[keys_index[column]]
                 
 example = Table()
 example.tabl = {'Namrfrfrrfrrfrfes': ['False', 'True', 'True', 'False'], 'Ages': ['89', '99', '9', '56', '76']}
-example.copy = example.get_rows_by_number(1,3,copy_table=True)
-example.columns = example.get_column_types(by_number=True)
-print(example.copy, example.columns)
+copy = example.get_rows_by_number(1,3,copy_table=True)
+columns = example.get_column_types(by_number=True)
+gval = example.get_values(1)
+print(copy, columns, gval)
