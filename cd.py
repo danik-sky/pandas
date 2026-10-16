@@ -17,39 +17,69 @@ def converter(s):
             return s
 
 class Table:
-    def save_table(self, name):
-        if name[-3:] == 'txt':
-            wid = {}
-            for nm, val in self.tabl.items():
-                maxl = len(str(nm))
-                for i in val:
-                    if len(str(i)) > maxl:
-                        maxl = len(str(i))
-                wid[nm] = maxl + 2
-            sr = ""
-            for col in self.tabl.keys():
-                sr += "{:<{width}}".format(str(col), width=wid[col])
-            sr+='\n'
-            for i in range(len(list(self.tabl.values())[0])):
-                for col, lin in self.tabl.items():
-                    sr += "{:<{width}}".format(str(lin[i]), width=wid[col])
-                sr+='\n'
-            with open(name, 'w') as fw:
-                fw.write(sr)
-        elif name[-3:] == 'csv':
-            col = list(self.tabl.keys())
-            lin = list(zip(*self.tabl.values()))
-            with open(name, mode = "w", newline='') as fw:
-                writer = csv.writer(fw)
-                writer.writerow(col)
-                writer.writerows(lin)
-        elif name[-3:] == 'pkl' or name[-3:] == 'kle':
-            with open(name, 'wb') as fw:
-                pickle.dump(self.tabl, fw)
+    def save_table(self, name, max_rows=1):
+        if max_rows > 1:
+            kol = len(list(self.tabl.values())[0])//max_rows
+            last = len(list(self.tabl.values())[0])%max_rows
+            for i in range(kol):
+                file = str(i+1) + name
+                ct = self.get_rows_by_number(i*max_rows, (i*max_rows) + max_rows, copy_table=True)
+                if file[-3:] == 'csv':
+                    col = list(ct.keys())
+                    lin = list(zip(*ct.values()))
+                    with open(file, mode = "w", newline='') as fw:
+                        writer = csv.writer(fw)
+                        writer.writerow(col)
+                        writer.writerows(lin)
+                elif file[-3:] == 'pkl' or file[-3:] == 'kle':
+                    with open(file, 'wb') as fw:
+                        pickle.dump(ct, fw)
+            if last!=0:
+                file = 'last_'+name
+                ct = self.get_rows_by_number(len(list(self.tabl.values())[0])-last, len(list(self.tabl.values())[0]), copy_table=True)
+                if file[-3:] == 'csv':
+                    col = list(ct.keys())
+                    lin = list(zip(*ct.values()))
+                    with open(file, mode = "w", newline='') as fw:
+                        writer = csv.writer(fw)
+                        writer.writerow(col)
+                        writer.writerows(lin)
+                elif file[-3:] == 'pkl' or file[-3:] == 'kle':
+                    with open(file, 'wb') as fw:
+                        pickle.dump(ct, fw)
         else:
-            print("Сохранение невозмонжо(Формат неизвестный)")
-            raise SystemExit(0)
-        print(f"Сохранено в файл {name}")
+            if name[-3:] == 'txt':
+                wid = {}
+                for nm, val in self.tabl.items():
+                    maxl = len(str(nm))
+                    for i in val:
+                        if len(str(i)) > maxl:
+                            maxl = len(str(i))
+                    wid[nm] = maxl + 2
+                sr = ""
+                for col in self.tabl.keys():
+                    sr += "{:<{width}}".format(str(col), width=wid[col])
+                sr+='\n'
+                for i in range(len(list(self.tabl.values())[0])):
+                    for col, lin in self.tabl.items():
+                        sr += "{:<{width}}".format(str(lin[i]), width=wid[col])
+                    sr+='\n'
+                with open(name, 'w') as fw:
+                    fw.write(sr)
+            elif name[-3:] == 'csv':
+                col = list(self.tabl.keys())
+                lin = list(zip(*self.tabl.values()))
+                with open(name, mode = "w", newline='') as fw:
+                    writer = csv.writer(fw)
+                    writer.writerow(col)
+                    writer.writerows(lin)
+            elif name[-3:] == 'pkl' or name[-3:] == 'kle':
+                with open(name, 'wb') as fw:
+                    pickle.dump(self.tabl, fw)
+            else:
+                print("Сохранение невозмонжо(Формат неизвестный)")
+                raise SystemExit(0)
+            print(f"Сохранено в файл {name}")
     def load_table(self,*name):
         if len(list(name)) > 1:
             files = list(name)
@@ -289,4 +319,6 @@ class Table:
 
 example = Table()
 example.load_table('TXT.csv', '2TXT.pickle')
+example.save_table('table.pickle', 4)
+example.load_table('last_table.pickle', '1table.pickle')
 example.print_table()
