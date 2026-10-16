@@ -43,9 +43,12 @@ class Table:
                 writer = csv.writer(fw)
                 writer.writerow(col)
                 writer.writerows(lin)
-        else:
+        elif name[-3:] == 'pkl' or name[-3:] == 'ile':
             with open(name, 'wb') as fw:
                 pickle.dump(self.tabl, fw)
+        else:
+            print("Сохранение невозмонжо(Формат неизвестный)")
+            raise SystemExit(0)
         print(f"Сохранено в файл {name}")
     def load_table(self,name):
         if name[-3:]=='csv':
@@ -67,13 +70,19 @@ class Table:
                         f = False
                 if f == False:
                     self.tabl[k] = [str(v) for v in vals]
-        else:
+        elif name[-3:] == 'pkl' or name[-3:] == 'ile':
             with open(name, 'rb') as fw:
                 self.tabl = pickle.load(fw)
+        else:
+            print("Загрузка невозмонжа(Формат неизвестный)")
+            raise SystemExit(0)
         print("Загружено в таблицу tabl")
     def get_rows_by_number(self, start, stop=0, copy_table=False):
         if stop == 0:
             stop = start + 1
+        if stop < start:  
+            print("Неверно указаны индексы для того, чтобы сохранить таблицу.")
+            raise SystemExit(0)   
         ct = {}
         for k in self.tabl.keys():
             ct[k]=[]
@@ -91,12 +100,17 @@ class Table:
         ct={}
         for k in self.tabl.keys():
             ct[k]=[]
+        f = 0
         for v in vals:
             val = list(self.tabl.values())
             for i in range(len(val[0])):
                 if val[0][i] == v:
                     for k, elem in self.tabl.items():
                         ct[k].append(elem[i])
+                        f = 1
+        if f == 0:
+            print('Введены неверные значения элементов.')
+            raise SystemExit(0)
         if copy_table == True:
             print("Копия таблицы сохранена")
             return ct
@@ -107,6 +121,8 @@ class Table:
     def get_column_types(self, by_number=True):
         ct = {}
         for k, vals in self.tabl.items():
+            if not vals:
+                raise ValueError(f"Невозможно определить тип данных: колонка '{k}' пуста.")
             ct[k]=type(vals[0]).__name__
         columns = {}
         if by_number == True:
@@ -134,11 +150,13 @@ class Table:
                         vals = [int(x) for x in vals]
                     except:
                         print("Ошибка: невозможно привести элементы таблицы к типу int")
+                        raise SystemExit(0)
                 case 'float':
                     try:
                         vals = [float(x) for x in vals]
                     except:
                         print("Ошибка: невозможно привести элементы таблицы к типу float")
+                        raise SystemExit(0)
                 case 'bool':
                     try:
                         new_vals = []
@@ -150,25 +168,39 @@ class Table:
                                 elif xbool in ('false', '0'):
                                     new_vals.append(False)
                                 else:
-                                    raise ValueError("Ошибка: невозможно привести элементы таблицы к типу float")
+                                    print("Ошибка: невозможно привести элементы таблицы к типу bool")
+                                    raise SystemExit(0)
                             else:
                                 new_vals.append(bool(x))
                         vals = new_vals
                     except:
                         print("Ошибка: невозможно привести элементы таблицы к типу bool")
+                        raise SystemExit(0)
             self.tabl[k]=vals
         print("Типы элементов таблицы изменены")
     def get_values(self, column=0):
         if isinstance(column, str):
+            if not self.tabl[column]:
+                print("Указана пустая строка")
+                raise SystemExit(0)
             return self.tabl[column]
         else:
             keys_index = list(self.tabl.keys())
+            if  not self.tabl[keys_index[column]]:
+                print("Указана пустая строка")
+                raise SystemExit(0)
             return self.tabl[keys_index[column]]
     def get_value(self, column=0):
         if isinstance(column, str):
+            if not self.tabl[columns]:
+                print("Указана пустая строка")
+                raise SystemExit(0)
             return self.tabl[column][0]
         else:
             keys_index = list(self.tabl.keys())
+            if not self.tabl[keys_index[column]]:
+                print("Указана пустая строка")
+                raise SystemExit(0)
             return self.tabl[keys_index[column]][0]
     def set_values(self, values, column=0):
         if isinstance(column, str):
@@ -177,6 +209,7 @@ class Table:
                 self.tabl[column] = [identifier(x) for x in values]
             except:
                 print("Невозможно преобразовать данные к исходному типу")
+                raise SystemExit(0)
         else:
             identifier = eval(self.get_column_types(by_number=True)[column])
             keys_index = list(self.tabl.keys())
@@ -184,6 +217,7 @@ class Table:
                 self.tabl[keys_index[column]] = [identifier(x) for x in values]
             except:
                 print("Невозможно преобразовать данные к исходному типу")
+                raise SystemExit(0)
     def set_value(self, value, column=0):
         if isinstance(column, str):
             identifier = eval(self.get_column_types(by_number=False)[column])
@@ -191,13 +225,15 @@ class Table:
                 self.tabl[column] = [identifier(value)]
             except:
                 print("Невозможно преобразовать данные к исходному типу")
+                raise SystemExit(0)
         else:
             identifier = eval(self.get_column_types(by_number=True)[column])
             keys_index = list(self.tabl.keys())
             try:
                 self.tabl[keys_index[column]] = [identifier(value)]
             except:
-                print("Невозможно преобразовать данные к исходному типу")    
+                print("Невозможно преобразовать данные к исходному типу") 
+                raise SystemExit(0)   
     def print_table(self):
         wid = {}
         for nm, val in self.tabl.items():
@@ -219,5 +255,6 @@ class Table:
 example = Table()
 example.tabl = {'Namrfrfrrfrrfrfes': [False, True, True, False], 'Ages': [89, 97, 32, 6], 'Country': ['Iolklkl', 'sdhjshdjfk', 'g', 'jkl'], 'Coef': [0.7, 12.56, 34.3, 2.0]}
 columns = example.get_column_types(by_number=True)
-print(columns)
+gvals = example.get_values()
+print(columns, '\n', gvals)
 example.print_table()
