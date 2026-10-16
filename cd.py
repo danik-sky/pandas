@@ -30,7 +30,7 @@ class Table:
             for col in self.tabl.keys():
                 sr += "{:<{width}}".format(str(col), width=wid[col])
             sr+='\n'
-            for i in range(len(self.tabl.values())):
+            for i in range(len(list(self.tabl.values())[0])):
                 for col, lin in self.tabl.items():
                     sr += "{:<{width}}".format(str(lin[i]), width=wid[col])
                 sr+='\n'
@@ -43,39 +43,74 @@ class Table:
                 writer = csv.writer(fw)
                 writer.writerow(col)
                 writer.writerows(lin)
-        elif name[-3:] == 'pkl' or name[-3:] == 'ile':
+        elif name[-3:] == 'pkl' or name[-3:] == 'kle':
             with open(name, 'wb') as fw:
                 pickle.dump(self.tabl, fw)
         else:
             print("Сохранение невозмонжо(Формат неизвестный)")
             raise SystemExit(0)
         print(f"Сохранено в файл {name}")
-    def load_table(self,name):
-        if name[-3:]=='csv':
-            self.tabl={}
-            with open(name, mode='r') as fw:
-                reader = csv.DictReader(fw)
-                for col in reader.fieldnames:
-                    self.tabl[col] = []
-                for lin in reader:
-                    for col in reader.fieldnames:
-                        val = lin[col]
-                        if val!=None:
-                            val = converter(val)
-                            self.tabl[col].append(val)
-            for k, vals in self.tabl.items():
-                f = True
-                for v in vals:
-                    if type(self.tabl[k][0]) != type(v):
-                        f = False
-                if f == False:
-                    self.tabl[k] = [str(v) for v in vals]
-        elif name[-3:] == 'pkl' or name[-3:] == 'ile':
-            with open(name, 'rb') as fw:
-                self.tabl = pickle.load(fw)
+    def load_table(self,*name):
+        if len(list(name)) > 1:
+            files = list(name)
+            ct={}
+            for file in files:
+                if file[-3:]=='csv':
+                    tct={}
+                    with open(file, mode='r') as fw:
+                        reader = csv.DictReader(fw)
+                        for col in reader.fieldnames:
+                            tct[col] = []
+                        for lin in reader:
+                            for col in reader.fieldnames:
+                                val = lin[col]
+                                if val!=None:
+                                    val = converter(val)
+                                    tct[col].append(val)
+                elif file[-3:] == 'pkl' or file[-3:] == 'kle':
+                    tct={}
+                    with open(file, 'rb') as fw:
+                        tct = pickle.load(fw)
+                else:
+                    print("Загрузка невозмонжа(Формат неизвестный)")
+                    raise SystemExit(0)  
+                if not ct:
+                    for k in tct.keys():
+                        ct[k] = []
+                for k in tct.keys():
+                    try:
+                        ct[k].extend(tct[k])
+                    except:
+                        print("Несопоставимые значения таблиц")
+                        raise SystemExit(0)
+            self.tabl = ct
         else:
-            print("Загрузка невозмонжа(Формат неизвестный)")
-            raise SystemExit(0)
+            name = name[0]
+            if name[-3:]=='csv':
+                self.tabl={}
+                with open(name, mode='r') as fw:
+                    reader = csv.DictReader(fw)
+                    for col in reader.fieldnames:
+                        self.tabl[col] = []
+                    for lin in reader:
+                        for col in reader.fieldnames:
+                            val = lin[col]
+                            if val!=None:
+                                val = converter(val)
+                                self.tabl[col].append(val)
+                for k, vals in self.tabl.items():
+                    f = True
+                    for v in vals:
+                        if type(self.tabl[k][0]) != type(v):
+                            f = False
+                    if f == False:
+                        self.tabl[k] = [str(v) for v in vals]
+            elif name[-3:] == 'pkl' or name[-3:] == 'kle':
+                with open(name, 'rb') as fw:
+                    self.tabl = pickle.load(fw)
+            else:
+                print("Загрузка невозмонжа(Формат неизвестный)")
+                raise SystemExit(0)
         print("Загружено в таблицу tabl")
     def get_rows_by_number(self, start, stop=0, copy_table=False):
         if stop == 0:
@@ -192,7 +227,7 @@ class Table:
             return self.tabl[keys_index[column]]
     def get_value(self, column=0):
         if isinstance(column, str):
-            if not self.tabl[columns]:
+            if not self.tabl[column]:
                 print("Указана пустая строка")
                 raise SystemExit(0)
             return self.tabl[column][0]
@@ -246,15 +281,12 @@ class Table:
         for col in self.tabl.keys():
             sr += "{:<{width}}".format(str(col), width=wid[col])
         sr+='\n'
-        for i in range(len(self.tabl.values())):
+        for i in range(len(list(self.tabl.values())[0])):
             for col, lin in self.tabl.items():
                 sr += "{:<{width}}".format(str(lin[i]), width=wid[col])
             sr+='\n'
         print(sr)
 
 example = Table()
-example.tabl = {'Namrfrfrrfrrfrfes': [False, True, True, False], 'Ages': [89, 97, 32, 6], 'Country': ['Iolklkl', 'sdhjshdjfk', 'g', 'jkl'], 'Coef': [0.7, 12.56, 34.3, 2.0]}
-columns = example.get_column_types(by_number=True)
-gvals = example.get_values()
-print(columns, '\n', gvals)
+example.load_table('TXT.csv', '2TXT.pickle')
 example.print_table()
