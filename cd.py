@@ -349,6 +349,21 @@ class Table:
             ct1[k] = v[:row_number]
             ct2[k] = v[row_number:]
         return ct1, ct2
+    def add(self, *keys):
+        if len(keys)>1:
+            res = [0] * len(list(self.tabl.values())[0])
+            for k in keys:
+                for i in range(len(self.tabl[k])):
+                    v=self.tabl[k][i]
+                    try:
+                        res[i] += v
+                    except:
+                        print("Несопоставимые значения для сложения")
+                        raise SystemExit(0)
+            return res
+        else:
+            print("Необходимо ввести как минимум два столбца")
+            raise SystemExit(0)
     def print_table(self):
         wid = {}
         for nm, val in self.tabl.items():
@@ -368,7 +383,6 @@ class Table:
         print(sr)
 
 example = Table()
-example.load_table('2TXT.csv')
-columns = example.get_column_types()
-print(columns)
-example.print_table()
+example.load_table('0table.csv')
+sum = example.add('Ages', 'Coef')
+print(sum)
