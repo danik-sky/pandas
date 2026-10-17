@@ -402,6 +402,83 @@ class Table:
             return res
         else:
             raise ValueError("Для выполнения операции необходимо передать два столбца")
+    def gr(self, *keys):
+        if len(keys)==2:
+            res = []
+            for k in keys:
+                for i in range(len(self.tabl[k])):
+                    v=self.tabl[k][i]
+                    if keys[0] == k:
+                        res.append(v)
+                    else:
+                        try:
+                            res[i] = res[i] > v
+                        except:
+                            raise TypeError(f"Операция не применима к несовместимым данным в строке {i}")
+            return res
+        else:
+            raise ValueError("Для выполнения операции необходимо передать два столбца")
+    def ls(self, *keys):
+        if len(keys)==2:
+            res = []
+            for k in keys:
+                for i in range(len(self.tabl[k])):
+                    v=self.tabl[k][i]
+                    if keys[0] == k:
+                        res.append(v)
+                    else:
+                        try:
+                            res[i] = res[i] < v
+                        except:
+                            raise TypeError(f"Операция не применима к несовместимым данным в строке {i}")
+            return res
+        else:
+            raise ValueError("Для выполнения операции необходимо передать два столбца")
+    def ge(self, *keys):
+        if len(keys)==2:
+            res = []
+            for k in keys:
+                for i in range(len(self.tabl[k])):
+                    v=self.tabl[k][i]
+                    if keys[0] == k:
+                        res.append(v)
+                    else:
+                        try:
+                            res[i] = res[i] >= v
+                        except:
+                            raise TypeError(f"Операция не применима к несовместимым данным в строке {i}")
+            return res
+        else:
+            raise ValueError("Для выполнения операции необходимо передать два столбца")
+    def le(self, *keys):
+        if len(keys)==2:
+            res = []
+            for k in keys:
+                for i in range(len(self.tabl[k])):
+                    v=self.tabl[k][i]
+                    if keys[0] == k:
+                        res.append(v)
+                    else:
+                        try:
+                            res[i] = res[i] <= v
+                        except:
+                            raise TypeError(f"Операция не применима к несовместимым данным в строке {i}")
+            return res
+        else:
+            raise ValueError("Для выполнения операции необходимо передать два столбца")
+    def ne(self, *keys):
+        if len(keys)==2:
+            res = []
+            for k in keys:
+                for i in range(len(self.tabl[k])):
+                    v=self.tabl[k][i]
+                    if keys[0] == k:
+                        res.append(v)
+                    else:
+                        res[i] = res[i] != v
+            return res
+        else:
+            raise ValueError("Для выполнения операции необходимо передать два столбца")
     def print_table(self):
         wid = {}
         for nm, val in self.tabl.items():
@@ -423,4 +500,9 @@ class Table:
 example = Table()
 example.load_table('0table.csv')
 eq = example.eq('Ages', 'Coef')
-print(eq)
+gr = example.gr('Country', 'Coef')
+ls = example.ls('Ages', 'Coef')
+ge = example.ge('Ages', 'Coef')
+le = example.le('Ages', 'Coef')
+ne = example.ne('Ages', 'Coef')
+print(eq, gr, ls, ge, le, ne)
