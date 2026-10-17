@@ -298,7 +298,14 @@ class Table:
                 self.tabl[keys_index[column]] = [identifier(value)]
             except:
                 print("Невозможно преобразовать данные к исходному типу") 
-                raise SystemExit(0)   
+                raise SystemExit(0)  
+    def concat(self, table):
+        if self.tabl.keys() == table.keys():
+            for k in self.tabl.keys():
+                self.tabl[k].extend(table[k])
+        else:
+            print("Несопоставимые значения столбцов")
+            raise SystemExit(0)
     def print_table(self):
         wid = {}
         for nm, val in self.tabl.items():
@@ -321,4 +328,7 @@ example = Table()
 example.load_table('TXT.csv', '2TXT.pickle')
 example.save_table('table.pickle', 4)
 example.load_table('last_table.pickle', '1table.pickle')
+temptable = example.tabl
+example.load_table('TXT.csv')
+example.concat(temptable)
 example.print_table()
