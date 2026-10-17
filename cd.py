@@ -382,6 +382,21 @@ class Table:
             else:
                 print("Необходимо ввести как минимум два столбца")
                 raise SystemExit(0)
+    def mul(self, *keys):
+            if len(keys)>1:
+                res = [1] * len(list(self.tabl.values())[0])
+                for k in keys:
+                    for i in range(len(self.tabl[k])):
+                        v=self.tabl[k][i]
+                        try:
+                            res[i] *= v
+                        except:
+                            print("Несопоставимые значения для умножения")
+                            raise SystemExit(0)
+                return res
+            else:
+                print("Необходимо ввести как минимум два столбца")
+                raise SystemExit(0)
     def print_table(self):
         wid = {}
         for nm, val in self.tabl.items():
@@ -404,4 +419,5 @@ example = Table()
 example.load_table('0table.csv')
 sum = example.add('Ages', 'Coef')
 dif = example.sub('Ages', 'Coef')
-print(sum, dif)
+mul = example.mul('Ages', 'Coef')
+print(sum, dif, mul)
