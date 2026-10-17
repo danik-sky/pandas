@@ -1,5 +1,32 @@
 import csv
 import pickle
+from datetime import datetime
+
+def try_to_datetime(data):
+    full_formats = [
+        "%Y-%m-%d %H:%M:%S",
+        "%Y-%m-%d %H:%M",
+        "%d.%m.%Y %H:%M:%S",
+        "%d.%m.%Y %H:%M",
+    ]
+    for fmt in full_formats:
+        try:
+            return datetime.strptime(data, fmt)
+        except ValueError:
+            continue
+    time_formats = ["%H:%M:%S", "%H:%M"]
+    for fmt in time_formats:
+        try:
+            return datetime.strptime(data, fmt).time()
+        except ValueError:
+            continue
+    date_formats = ["%Y-%m-%d", "%d.%m.%Y"]
+    for fmt in date_formats:
+        try:
+            return datetime.strptime(data, fmt).date()
+        except ValueError:
+            continue
+    return None
 
 def converter(s):
     sbool = s.strip().lower()
@@ -14,7 +41,10 @@ def converter(s):
             res = float(s)
             return res
         except:
-            return s
+            res = try_to_datetime(s)
+            if res == None:
+                return s
+            return res
 
 class Table:
     def save_table(self, name, max_rows=1):
@@ -241,6 +271,11 @@ class Table:
                     except:
                         print("Ошибка: невозможно привести элементы таблицы к типу bool")
                         raise SystemExit(0)
+                case 'datetime':
+                    vals = [try_to_datetime(x) for x in vals]
+                    if None in vals:
+                        print("Ошибка: невозможно привести элементы таблицы к типу datetime")
+                        raise SystemExit(0)
             self.tabl[k]=vals
         print("Типы элементов таблицы изменены")
     def get_values(self, column=0):
@@ -333,15 +368,7 @@ class Table:
         print(sr)
 
 example = Table()
-example.load_table('TXT.csv', '2TXT.pickle')
-example.save_table('table.pickle', 4)
-example.load_table('last_table.pickle', '1table.pickle')
-temptable = example.tabl
-example.load_table('TXT.csv')
-example.concat(temptable)
-example.print_table()
-t_table1, t_table2 = example.split(4)
-example.tabl = t_table1
-example.print_table()
-example.tabl = t_table2
+example.load_table('2TXT.csv')
+columns = example.get_column_types()
+print(columns)
 example.print_table()
