@@ -306,6 +306,14 @@ class Table:
         else:
             print("Несопоставимые значения столбцов")
             raise SystemExit(0)
+        return self.tabl
+    def split(self, row_number):
+        ct1 = {}
+        ct2 = {}
+        for k, v in self.tabl.items():
+            ct1[k] = v[:row_number]
+            ct2[k] = v[row_number:]
+        return ct1, ct2
     def print_table(self):
         wid = {}
         for nm, val in self.tabl.items():
@@ -331,4 +339,9 @@ example.load_table('last_table.pickle', '1table.pickle')
 temptable = example.tabl
 example.load_table('TXT.csv')
 example.concat(temptable)
+example.print_table()
+t_table1, t_table2 = example.split(4)
+example.tabl = t_table1
+example.print_table()
+example.tabl = t_table2
 example.print_table()
