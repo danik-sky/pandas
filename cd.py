@@ -365,38 +365,56 @@ class Table:
             print("Необходимо ввести как минимум два столбца")
             raise SystemExit(0)
     def sub(self, *keys):
-            if len(keys)>1:
-                res = []
-                for k in keys:
-                    for i in range(len(self.tabl[k])):
-                        v=self.tabl[k][i]
-                        if keys[0] == k:
-                            res.append(v)
-                        else:
-                            try:
-                                res[i] -= v
-                            except:
-                                print("Несопоставимые значения для вычитания")
-                                raise SystemExit(0)
-                return res
-            else:
-                print("Необходимо ввести как минимум два столбца")
-                raise SystemExit(0)
-    def mul(self, *keys):
-            if len(keys)>1:
-                res = [1] * len(list(self.tabl.values())[0])
-                for k in keys:
-                    for i in range(len(self.tabl[k])):
-                        v=self.tabl[k][i]
+        if len(keys)>1:
+            res = []
+            for k in keys:
+                for i in range(len(self.tabl[k])):
+                    v=self.tabl[k][i]
+                    if keys[0] == k:
+                        res.append(v)
+                    else:
                         try:
-                            res[i] *= v
+                            res[i] -= v
                         except:
-                            print("Несопоставимые значения для умножения")
+                            print("Несопоставимые значения для вычитания")
                             raise SystemExit(0)
-                return res
-            else:
-                print("Необходимо ввести как минимум два столбца")
-                raise SystemExit(0)
+            return res
+        else:
+            print("Необходимо ввести как минимум два столбца")
+            raise SystemExit(0)
+    def mul(self, *keys):
+        if len(keys)>1:
+            res = [1] * len(list(self.tabl.values())[0])
+            for k in keys:
+                for i in range(len(self.tabl[k])):
+                    v=self.tabl[k][i]
+                    try:
+                        res[i] *= v
+                    except:
+                        print("Несопоставимые значения для умножения")
+                        raise SystemExit(0)
+            return res
+        else:
+            print("Необходимо ввести как минимум два столбца")
+            raise SystemExit(0)
+    def div(self, *keys):
+        if len(keys)>1:
+            res = []
+            for k in keys:
+                for i in range(len(self.tabl[k])):
+                    v=self.tabl[k][i]
+                    if keys[0] == k:
+                        res.append(v)
+                    else:
+                        try:
+                            res[i] /= v
+                        except:
+                            print("Несопоставимые значения для деления")
+                            raise SystemExit(0)
+            return res
+        else:
+            print("Необходимо ввести как минимум два столбца")
+            raise SystemExit(0)
     def print_table(self):
         wid = {}
         for nm, val in self.tabl.items():
@@ -420,4 +438,5 @@ example.load_table('0table.csv')
 sum = example.add('Ages', 'Coef')
 dif = example.sub('Ages', 'Coef')
 mul = example.mul('Ages', 'Coef')
-print(sum, dif, mul)
+div = example.div('Ages', 'Coef')
+print(sum, dif, mul, div)
