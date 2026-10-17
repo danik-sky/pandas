@@ -107,8 +107,7 @@ class Table:
                 with open(name, 'wb') as fw:
                     pickle.dump(self.tabl, fw)
             else:
-                print("Сохранение невозмонжо(Формат неизвестный)")
-                raise SystemExit(0)
+                raise ValueError("Неизвестный формат файла. Поддерживаются только .txt, .csv, .pkl")
             print(f"Сохранено в файл {name}")
     def load_table(self,*name):
         if len(list(name)) > 1:
@@ -132,8 +131,7 @@ class Table:
                     with open(file, 'rb') as fw:
                         tct = pickle.load(fw)
                 else:
-                    print("Загрузка невозмонжа(Формат неизвестный)")
-                    raise SystemExit(0)  
+                    raise ValueError("Неизвестный формат файла. Поддерживаются только .txt, .csv, .pkl") 
                 if not ct:
                     for k in tct.keys():
                         ct[k] = []
@@ -141,8 +139,7 @@ class Table:
                     try:
                         ct[k].extend(tct[k])
                     except:
-                        print("Несопоставимые значения таблиц")
-                        raise SystemExit(0)
+                        raise ValueError("Таблицы не могут быть объединены: различаются наборы столбцов")
             self.tabl = ct
         else:
             name = name[0]
@@ -169,15 +166,13 @@ class Table:
                 with open(name, 'rb') as fw:
                     self.tabl = pickle.load(fw)
             else:
-                print("Загрузка невозмонжа(Формат неизвестный)")
-                raise SystemExit(0)
+                raise ValueError("Неизвестный формат файла. Поддерживаются только .txt, .csv, .pkl") 
         print("Загружено в таблицу tabl")
     def get_rows_by_number(self, start, stop=0, copy_table=False):
         if stop == 0:
             stop = start + 1
         if stop < start:  
-            print("Неверно указаны индексы для того, чтобы сохранить таблицу.")
-            raise SystemExit(0)   
+            raise IndexError("Неверный диапазон: конечный индекс не может быть меньше начального") 
         ct = {}
         for k in self.tabl.keys():
             ct[k]=[]
@@ -204,8 +199,7 @@ class Table:
                         ct[k].append(elem[i])
                         f = 1
         if f == 0:
-            print('Введены неверные значения элементов.')
-            raise SystemExit(0)
+            raise ValueError("Указанные значения не найдены в первом столбце таблицы")
         if copy_table == True:
             print("Копия таблицы сохранена")
             return ct
@@ -244,14 +238,12 @@ class Table:
                     try:
                         vals = [int(x) for x in vals]
                     except:
-                        print("Ошибка: невозможно привести элементы таблицы к типу int")
-                        raise SystemExit(0)
+                        raise TypeError("Невозможно привести данные столбца к указанному типу")
                 case 'float':
                     try:
                         vals = [float(x) for x in vals]
                     except:
-                        print("Ошибка: невозможно привести элементы таблицы к типу float")
-                        raise SystemExit(0)
+                        raise TypeError("Невозможно привести данные столбца к указанному типу")
                 case 'bool':
                     try:
                         new_vals = []
@@ -263,44 +255,37 @@ class Table:
                                 elif xbool in ('false', '0'):
                                     new_vals.append(False)
                                 else:
-                                    print("Ошибка: невозможно привести элементы таблицы к типу bool")
-                                    raise SystemExit(0)
+                                    raise TypeError("Невозможно привести данные столбца к указанному типу")
                             else:
                                 new_vals.append(bool(x))
                         vals = new_vals
                     except:
-                        print("Ошибка: невозможно привести элементы таблицы к типу bool")
-                        raise SystemExit(0)
+                        raise TypeError("Невозможно привести данные столбца к указанному типу")
                 case 'datetime':
                     vals = [try_to_datetime(x) for x in vals]
                     if None in vals:
-                        print("Ошибка: невозможно привести элементы таблицы к типу datetime")
-                        raise SystemExit(0)
+                        raise TypeError("Невозможно привести данные столбца к указанному типу")
             self.tabl[k]=vals
         print("Типы элементов таблицы изменены")
     def get_values(self, column=0):
         if isinstance(column, str):
             if not self.tabl[column]:
-                print("Указана пустая строка")
-                raise SystemExit(0)
+                raise ValueError("Столбец пуст, невозможно получить значение")
             return self.tabl[column]
         else:
             keys_index = list(self.tabl.keys())
             if  not self.tabl[keys_index[column]]:
-                print("Указана пустая строка")
-                raise SystemExit(0)
+                raise ValueError("Столбец пуст, невозможно получить значение")
             return self.tabl[keys_index[column]]
     def get_value(self, column=0):
         if isinstance(column, str):
             if not self.tabl[column]:
-                print("Указана пустая строка")
-                raise SystemExit(0)
+                raise ValueError("Столбец пуст, невозможно получить значение")
             return self.tabl[column][0]
         else:
             keys_index = list(self.tabl.keys())
             if not self.tabl[keys_index[column]]:
-                print("Указана пустая строка")
-                raise SystemExit(0)
+                raise ValueError("Столбец пуст, невозможно получить значение")
             return self.tabl[keys_index[column]][0]
     def set_values(self, values, column=0):
         if isinstance(column, str):
@@ -308,39 +293,34 @@ class Table:
             try:
                 self.tabl[column] = [identifier(x) for x in values]
             except:
-                print("Невозможно преобразовать данные к исходному типу")
-                raise SystemExit(0)
+                raise TypeError("Невозможно привести данные столбца к указанному типу")
         else:
             identifier = eval(self.get_column_types(by_number=True)[column])
             keys_index = list(self.tabl.keys())
             try:
                 self.tabl[keys_index[column]] = [identifier(x) for x in values]
             except:
-                print("Невозможно преобразовать данные к исходному типу")
-                raise SystemExit(0)
+                raise TypeError("Невозможно привести данные столбца к указанному типу")
     def set_value(self, value, column=0):
         if isinstance(column, str):
             identifier = eval(self.get_column_types(by_number=False)[column])
             try:
                 self.tabl[column] = [identifier(value)]
             except:
-                print("Невозможно преобразовать данные к исходному типу")
-                raise SystemExit(0)
+                raise TypeError("Невозможно привести данные столбца к указанному типу")
         else:
             identifier = eval(self.get_column_types(by_number=True)[column])
             keys_index = list(self.tabl.keys())
             try:
                 self.tabl[keys_index[column]] = [identifier(value)]
             except:
-                print("Невозможно преобразовать данные к исходному типу") 
-                raise SystemExit(0)  
+                raise TypeError("Невозможно привести данные столбца к указанному типу") 
     def concat(self, table):
         if self.tabl.keys() == table.keys():
             for k in self.tabl.keys():
                 self.tabl[k].extend(table[k])
         else:
-            print("Несопоставимые значения столбцов")
-            raise SystemExit(0)
+            raise ValueError("Невозможно объединить таблицы: не совпадают имена колонок")
         return self.tabl
     def split(self, row_number):
         ct1 = {}
@@ -358,12 +338,10 @@ class Table:
                     try:
                         res[i] += v
                     except:
-                        print("Несопоставимые значения для сложения")
-                        raise SystemExit(0)
+                        raise TypeError(f"Операция не применима к нечисловым данным в строке {i}")
             return res
         else:
-            print("Необходимо ввести как минимум два столбца")
-            raise SystemExit(0)
+            raise ValueError("Для выполнения операции необходимо передать как минимум два столбца")
     def sub(self, *keys):
         if len(keys)>1:
             res = []
@@ -376,12 +354,10 @@ class Table:
                         try:
                             res[i] -= v
                         except:
-                            print("Несопоставимые значения для вычитания")
-                            raise SystemExit(0)
+                            raise TypeError(f"Операция не применима к нечисловым данным в строке {i}")
             return res
         else:
-            print("Необходимо ввести как минимум два столбца")
-            raise SystemExit(0)
+            raise ValueError("Для выполнения операции необходимо передать как минимум два столбца")
     def mul(self, *keys):
         if len(keys)>1:
             res = [1] * len(list(self.tabl.values())[0])
@@ -391,12 +367,10 @@ class Table:
                     try:
                         res[i] *= v
                     except:
-                        print("Несопоставимые значения для умножения")
-                        raise SystemExit(0)
+                        raise TypeError(f"Операция не применима к нечисловым данным в строке {i}")
             return res
         else:
-            print("Необходимо ввести как минимум два столбца")
-            raise SystemExit(0)
+            raise ValueError("Для выполнения операции необходимо передать как минимум два столбца")
     def div(self, *keys):
         if len(keys)>1:
             res = []
@@ -408,13 +382,26 @@ class Table:
                     else:
                         try:
                             res[i] /= v
-                        except:
-                            print("Несопоставимые значения для деления")
-                            raise SystemExit(0)
+                        except ZeroDivisionError:
+                            raise ZeroDivisionError(f"Деление на ноль в строке {i} на значение из столбца '{k}'")
+                        except TypeError:
+                            raise TypeError(f"Невозможно выполнить деление для нечислового типа данных в столбце '{k}'")
             return res
         else:
-            print("Необходимо ввести как минимум два столбца")
-            raise SystemExit(0)
+            raise ValueError("Для выполнения операции необходимо передать как минимум два столбца")
+    def eq(self, *keys):
+        if len(keys)==2:
+            res = []
+            for k in keys:
+                for i in range(len(self.tabl[k])):
+                    v=self.tabl[k][i]
+                    if keys[0] == k:
+                        res.append(v)
+                    else:
+                        res[i] = res[i] == v
+            return res
+        else:
+            raise ValueError("Для выполнения операции необходимо передать два столбца")
     def print_table(self):
         wid = {}
         for nm, val in self.tabl.items():
@@ -435,8 +422,5 @@ class Table:
 
 example = Table()
 example.load_table('0table.csv')
-sum = example.add('Ages', 'Coef')
-dif = example.sub('Ages', 'Coef')
-mul = example.mul('Ages', 'Coef')
-div = example.div('Ages', 'Coef')
-print(sum, dif, mul, div)
+eq = example.eq('Ages', 'Coef')
+print(eq)
