@@ -364,6 +364,24 @@ class Table:
         else:
             print("Необходимо ввести как минимум два столбца")
             raise SystemExit(0)
+    def sub(self, *keys):
+            if len(keys)>1:
+                res = []
+                for k in keys:
+                    for i in range(len(self.tabl[k])):
+                        v=self.tabl[k][i]
+                        if keys[0] == k:
+                            res.append(v)
+                        else:
+                            try:
+                                res[i] -= v
+                            except:
+                                print("Несопоставимые значения для вычитания")
+                                raise SystemExit(0)
+                return res
+            else:
+                print("Необходимо ввести как минимум два столбца")
+                raise SystemExit(0)
     def print_table(self):
         wid = {}
         for nm, val in self.tabl.items():
@@ -385,4 +403,5 @@ class Table:
 example = Table()
 example.load_table('0table.csv')
 sum = example.add('Ages', 'Coef')
-print(sum)
+dif = example.sub('Ages', 'Coef')
+print(sum, dif)
