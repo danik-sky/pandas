@@ -479,6 +479,21 @@ class Table:
             return res
         else:
             raise ValueError("Для выполнения операции необходимо передать два столбца")
+    def filter_rows(self, bool_list, copy_table=False):
+        ct = {}
+        for k in self.tabl.keys():
+            ct[k] = []
+        for i in range(len(bool_list)):
+            if bool_list[i] == True:
+                for k, v in self.tabl.items():
+                    ct[k].append(v[i])
+        if copy_table == True:
+            print("Копия таблицы сохранена")
+            return ct
+        else:
+            self.tabl = ct
+            print("Сохранено в исходную таблицу")
+            return self.tabl
     def print_table(self):
         wid = {}
         for nm, val in self.tabl.items():
@@ -500,9 +515,11 @@ class Table:
 example = Table()
 example.load_table('0table.csv')
 eq = example.eq('Ages', 'Coef')
-gr = example.gr('Country', 'Coef')
+gr = example.gr('Ages', 'Coef')
 ls = example.ls('Ages', 'Coef')
 ge = example.ge('Ages', 'Coef')
 le = example.le('Ages', 'Coef')
 ne = example.ne('Ages', 'Coef')
+example.filter_rows(ls)
 print(eq, gr, ls, ge, le, ne)
+example.print_table()
