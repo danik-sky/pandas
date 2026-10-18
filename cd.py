@@ -494,6 +494,20 @@ class Table:
             self.tabl = ct
             print("Сохранено в исходную таблицу")
             return self.tabl
+    def merge_tables(self, table, by_number=True):
+        if by_number == True:
+            self.tabl.update(table)
+        else:
+            id_index_self = list(self.tabl.values())[0]
+            id_index_table = list(table.values())[0]
+            for k in table.keys():
+                self.tabl[k] = []
+            for i in id_index_self:
+                for j in id_index_table:
+                    if i == j:
+                        id = id_index_table.index(j)
+                        for k, v in table.items():
+                            self.tabl[k].append(v[id])
     def print_table(self):
         wid = {}
         for nm, val in self.tabl.items():
@@ -514,12 +528,7 @@ class Table:
 
 example = Table()
 example.load_table('0table.csv')
-eq = example.eq('Ages', 'Coef')
-gr = example.gr('Ages', 'Coef')
-ls = example.ls('Ages', 'Coef')
-ge = example.ge('Ages', 'Coef')
-le = example.le('Ages', 'Coef')
-ne = example.ne('Ages', 'Coef')
-example.filter_rows(ls)
-print(eq, gr, ls, ge, le, ne)
+example1 = Table()
+example1.load_table('1table.csv')
+example.merge_tables(example1.tabl, by_number=False)
 example.print_table()
