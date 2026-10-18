@@ -48,7 +48,7 @@ def converter(s):
 
 class Table:
     def save_table(self, name, max_rows=1):
-        if max_rows > 1:
+        if max_rows > 0:
             kol = len(list(self.tabl.values())[0])//max_rows
             last = len(list(self.tabl.values())[0])%max_rows
             for i in range(kol):
@@ -123,15 +123,17 @@ class Table:
                         for lin in reader:
                             for col in reader.fieldnames:
                                 val = lin[col]
-                                if val!=None:
+                                if val!=None and val!='':
                                     val = converter(val)
                                     tct[col].append(val)
+                                else:
+                                    tct[col].append(None)
                 elif file[-3:] == 'pkl' or file[-3:] == 'kle':
                     tct={}
                     with open(file, 'rb') as fw:
                         tct = pickle.load(fw)
                 else:
-                    raise ValueError("Неизвестный формат файла. Поддерживаются только .txt, .csv, .pkl") 
+                    raise ValueError("Неизвестный формат файла. Поддерживаются только .csv, .pkl") 
                 if not ct:
                     for k in tct.keys():
                         ct[k] = []
@@ -152,9 +154,11 @@ class Table:
                     for lin in reader:
                         for col in reader.fieldnames:
                             val = lin[col]
-                            if val!=None:
+                            if val!=None and val!='':
                                 val = converter(val)
                                 self.tabl[col].append(val)
+                            else:
+                                self.tabl[col].append(None)
                 for k, vals in self.tabl.items():
                     f = True
                     for v in vals:
@@ -166,7 +170,7 @@ class Table:
                 with open(name, 'rb') as fw:
                     self.tabl = pickle.load(fw)
             else:
-                raise ValueError("Неизвестный формат файла. Поддерживаются только .txt, .csv, .pkl") 
+                raise ValueError("Неизвестный формат файла. Поддерживаются только .csv, .pkl") 
         print("Загружено в таблицу tabl")
     def get_rows_by_number(self, start, stop=0, copy_table=False):
         if stop == 0:
@@ -480,6 +484,9 @@ class Table:
         else:
             raise ValueError("Для выполнения операции необходимо передать два столбца")
     def filter_rows(self, bool_list, copy_table=False):
+        total_rows = len(list(self.tabl.values())[0]) if self.tabl else 0
+        if len(bool_list) != total_rows:
+            raise ValueError("Длина bool_list не совпадает с количеством строк таблицы")
         ct = {}
         for k in self.tabl.keys():
             ct[k] = []
@@ -537,8 +544,3 @@ class Table:
         print(sr)
 
 example = Table()
-example.load_table('0table.csv')
-example1 = Table()
-example1.load_table('1table.csv')
-example.merge_tables(example1.tabl, by_number=True)
-example.print_table()
