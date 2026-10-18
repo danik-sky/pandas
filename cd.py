@@ -496,10 +496,20 @@ class Table:
             return self.tabl
     def merge_tables(self, table, by_number=True):
         if by_number == True:
+            common_cols = set(self.tabl.keys()) & set(table.keys())
+            if len(common_cols) > 0:
+                raise ValueError("Таблицы не должны иметь одинаковых столбцов")
+            if len(list(self.tabl.values())[0])!=len(list(table.values())[0]):
+                raise ValueError("Таблицы различной длины")
             self.tabl.update(table)
         else:
+            common_cols = set(self.tabl.keys()) & set(table.keys())
+            if len(common_cols) > 1:
+                raise ValueError("Таблицы не должны иметь одинаковых столбцов(Кроме первого, который отвечает за индексы)")
             id_index_self = list(self.tabl.values())[0]
             id_index_table = list(table.values())[0]
+            if len(set(id_index_table))!=len(id_index_table) or len(set(id_index_self))!=len(id_index_self):
+                raise ValueError("Первый столбец содержит неуникальные значения (дубликаты)")
             for k in table.keys():
                 self.tabl[k] = []
             for i in id_index_self:
@@ -530,5 +540,5 @@ example = Table()
 example.load_table('0table.csv')
 example1 = Table()
 example1.load_table('1table.csv')
-example.merge_tables(example1.tabl, by_number=False)
+example.merge_tables(example1.tabl, by_number=True)
 example.print_table()
