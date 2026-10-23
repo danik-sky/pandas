@@ -51,6 +51,13 @@ class Table:
         if data==None and columns==None:
             self._data = {}
         elif isinstance(data, list) and columns==None:
+            if not data:
+                self._data = {}
+                return
+            if len(set([len(row) for row in data]))!=1:
+                raise ValueError("Строки разной длины")
+            if len(set(data[0]))!=len(data[0]):
+                raise ValueError("Дубликаты имён столбцов")
             table={}
             for key in data[0]:
                 table[key] = []
@@ -59,8 +66,19 @@ class Table:
                     table[key].append(row[index])
             self._data = table
         elif isinstance(data, dict) and columns==None:
-            self._data = dict
+            lengths = set()
+            for cols in data.values():
+                lengths.add(len(cols))
+            if len(lengths)>1:
+                raise ValueError("Во входном словаре списки разной длины")
+            self._data = {key: values.copy() for key, values in data.items()}
         else:
+            lengths = set([len(row) for row in data])
+            lengths.add(len(columns))
+            if len(lengths)>1:
+                raise ValueError("Длина columns не совпадает с количеством значений в строке")
+            if len(set(columns))!=len(columns):
+                raise ValueError("Дубликаты имён столбцов")
             table={}
             for key in columns:
                 table[key] = []
@@ -566,4 +584,3 @@ class Table:
 
 t = Table([['a','b'], ['Вася', 17], ['Петя', 18]])
 t.print_table()
-print(t.get_values('a'))
