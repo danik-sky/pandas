@@ -5,6 +5,10 @@ import os
 import pickle
 from datetime import datetime, date as datetime_date, time as datetime_time
 
+def build_path(name):
+    path = Path(name)
+    return path.parent / get_file_format(name) / path.name
+
 def get_file_format(name):
     suffix = Path(name).suffix.lower()
     if suffix == ".txt":
@@ -85,24 +89,28 @@ def convert_time(value):
         return result
     raise ValueError("Неверный формат времени")
 
+def has_leading_zero(string):
+    digits = string.strip().lstrip('+-')
+    integer_part = digits.split('.')[0]
+    return len(integer_part) > 1 and integer_part.startswith('0')
 
 def converter(string):
-    is_bool = string.strip().lower()
-    if is_bool in ('true', 'false'):
-        res = is_bool == 'true'
-        return res
-    try:
-        res = int(string)
-        return res
-    except ValueError:
+    normalized = string.strip().lower()
+    if normalized in ('true', 'false'):
+        return normalized == 'true'
+    if not has_leading_zero(string):
         try:
-            res = float(string)
-            return res
-        except:
-            res = try_to_datetime(string)
-            if res == None:
-                return string
-            return res
+            return int(string)
+        except ValueError:
+            pass
+        try:
+            return float(string)
+        except ValueError:
+            pass
+    result = try_to_datetime(string)
+    if result is None:
+        return string
+    return result
 
 def convert_bool(value):
     if isinstance(value, bool):
@@ -130,45 +138,60 @@ TYPE_CONVERTERS = {
 
 class Table:
     def __init__(self, data=None, columns=None):
-        if data==None and columns==None:
-            self._data = {}
-        elif isinstance(data, list) and columns==None:
-            if not data:
+        self._source = None
+        self._row_indices = None
+        if columns is not None:
+            columns = list(columns)
+            if len(set(columns)) != len(columns):
+                raise ValueError("Дубликаты имён столбцов")
+        if data is None:
+            if columns is None:
                 self._data = {}
-                return
-            if len(set([len(row) for row in data]))!=1:
-                raise ValueError("Строки разной длины")
-            if len(set(data[0]))!=len(data[0]):
-                raise ValueError("Дубликаты имён столбцов")
-            table={}
-            for key in data[0]:
-                table[key] = []
-                index = data[0].index(key)
-                for row in data[1:]:
-                    table[key].append(row[index])
-            self._data = table
-        elif isinstance(data, dict) and columns==None:
-            lengths = set()
-            for cols in data.values():
-                lengths.add(len(cols))
-            if len(lengths)>1:
+            else:
+                self._data = {name: [] for name in columns}
+        elif isinstance(data, dict):
+            lengths = {len(values) for values in data.values()}
+            if len(lengths) > 1:
                 raise ValueError("Во входном словаре списки разной длины")
-            self._data = {key: values.copy() for key, values in data.items()}
+            if columns is None:
+                columns = list(data)
+            elif set(columns) != set(data):
+                raise ValueError("columns не совпадает с ключами словаря")
+            self._data = {name: list(data[name]) for name in columns}
+        elif isinstance(data, list):
+            if columns is None:
+                if not data:
+                    self._data = {}
+                    return
+                columns, rows = list(data[0]), data[1:]
+                if len(set(columns)) != len(columns):
+                    raise ValueError("Дубликаты имён столбцов")
+            else:
+                rows = data
+            if any(len(row) != len(columns) for row in rows):
+                raise ValueError("Длина строки не совпадает с количеством столбцов")
+            self._data = {name: [row[i] for row in rows] for i, name in enumerate(columns)}
         else:
-            lengths = set([len(row) for row in data])
-            lengths.add(len(columns))
-            if len(lengths)>1:
-                raise ValueError("Длина columns не совпадает с количеством значений в строке")
-            if len(set(columns))!=len(columns):
-                raise ValueError("Дубликаты имён столбцов")
-            table={}
-            for key in columns:
-                table[key] = []
-                index = columns.index(key)
-                for row in data:
-                    table[key].append(row[index])
-            self._data = table
-    def convert_column_types(self, data):
+            raise TypeError("data должен быть списком, словарём или None")
+    def _make_view(self, data, row_indices):
+        view = Table(data)
+        view._source = self
+        view._row_indices = list(row_indices)
+        return view
+    def _write_column(self, column_name, values):
+        self._data[column_name] = values
+        if self._source is not None:
+            source_values = self._source._data[column_name].copy()
+            for row_index, value in zip(self._row_indices, values):
+                source_values[row_index] = value
+            self._source._write_column(column_name, source_values)
+    @property
+    def row_count(self):
+        if not self._data:
+            return 0
+        return len(next(iter(self._data.values())))
+    @staticmethod
+    def convert_column_types(data):
         for column_name, column_values in data.items():
             non_none_values = [value for value in column_values if value is not None]
             if not non_none_values:
@@ -192,8 +215,7 @@ class Table:
         for column_name in self._data:
             output += "{:<{width}}".format(str(column_name),width=column_widths[column_name])
         output += "\n"
-        row_count = len(next(iter(self._data.values())))
-        for row_index in range(row_count):
+        for row_index in range(self.row_count):
             for column_name, column_values in self._data.items():
                 output += "{:<{width}}".format(str(column_values[row_index]),width=column_widths[column_name])
             output += "\n"
@@ -214,15 +236,11 @@ class Table:
                 pickle.dump(data, file)
     def save_table(self, name, max_rows=None):
         file_format = get_file_format(name)
-        folders = {
-            "txt": "txt",
-            "csv": "csv",
-            "pkl": "pkl"
-        }
-        folder = folders[file_format]
+        target = build_path(name)
+        folder = target.parent
         os.makedirs(folder, exist_ok=True)
-        filename = Path(name).name
-        name = str(Path(folder) / filename)
+        filename = target.name
+        name = str(target)
         if max_rows is None:
             if file_format == "txt":
                 self.write_file(name, self.format())
@@ -235,38 +253,40 @@ class Table:
                 raise ValueError("Разбиение файлов формата .txt не поддерживается")
             if not self._data:
                 raise ValueError("Нельзя разбить пустую таблицу на части")
-            row_count = len(next(iter(self._data.values())))
             chunk_number = 1
-            for start in range(0, row_count, max_rows):
-                stop = min(start + max_rows, row_count)
+            for start in range(0, self.row_count, max_rows):
+                stop = min(start + max_rows, self.row_count)
                 chunk_data = {column_name: values[start:stop] for column_name, values in self._data.items()}
                 part_name = f"{chunk_number}_{filename}"
                 part_path = str(Path(folder) / part_name)
                 self.write_file(part_path, chunk_data)
                 chunk_number += 1
+    @staticmethod
+    def _read_csv(file_name):
+        data = {}
+        with open(file_name, mode='r', newline='', encoding='utf-8') as csv_file:
+            reader = csv.DictReader(csv_file)
+            for column_name in reader.fieldnames:
+                data[column_name] = []
+            for row in reader:
+                for column_name in reader.fieldnames:
+                    value = row[column_name]
+                    if value is not None and value != '':
+                        data[column_name].append(converter(value))
+                    else:
+                        data[column_name].append(None)
+        return Table.convert_column_types(data)
     def load_table(self, *name):
+        if not name:
+            raise ValueError("Не указан ни один файл для загрузки")
         if len(name) > 1:
-            file_names = list(name)
             merged_data = {}
-            for file_name in file_names:
-                if get_file_format(file_name) == 'csv':
-                    file_data = {}
-                    with open(file_name, mode='r', newline='', encoding='utf-8') as csv_file:
-                        reader = csv.DictReader(csv_file)
-                        for column_name in reader.fieldnames:
-                            file_data[column_name] = []
-                        for row in reader:
-                            for column_name in reader.fieldnames:
-                                value = row[column_name]
-                                if value is not None and value != '':
-                                    value = converter(value)
-                                    file_data[column_name].append(value)
-                                else:
-                                    file_data[column_name].append(None)
-                        file_data = self.convert_column_types(file_data)
-                elif get_file_format(file_name) == 'pkl':
-                    file_data = {}
-                    with open(file_name, 'rb') as input_file:
+            for file_name in name:
+                file_format = get_file_format(file_name)
+                if file_format == 'csv':
+                    file_data = self._read_csv(build_path(file_name))
+                elif file_format == 'pkl':
+                    with open(build_path(file_name), 'rb') as input_file:
                         file_data = pickle.load(input_file)
                 else:
                     raise ValueError("Неизвестный формат файла. Поддерживаются только .csv, .pkl")
@@ -277,63 +297,47 @@ class Table:
                         raise ValueError("Таблицы не могут быть объединены: различаются наборы столбцов")
                     for column_name in merged_data:
                         merged_data[column_name].extend(file_data[column_name])
-            merged_data = self.convert_column_types(merged_data)
-            self._data = merged_data
+            self._data = self.convert_column_types(merged_data)
         else:
             name = name[0]
-            if get_file_format(name) == 'csv':
-                self._data = {}
-                with open(name, mode='r', newline='', encoding='utf-8') as csv_file:
-                    reader = csv.DictReader(csv_file)
-                    for column_name in reader.fieldnames:
-                        self._data[column_name] = []
-                    for row in reader:
-                        for column_name in reader.fieldnames:
-                            value = row[column_name]
-                            if value is not None and value != '':
-                                value = converter(value)
-                                self._data[column_name].append(value)
-                            else:
-                                self._data[column_name].append(None)
-                self._data = self.convert_column_types(self._data)
-            elif get_file_format(name) == 'pkl':
-                with open(name, 'rb') as input_file:
+            file_format = get_file_format(name)
+            if file_format == 'csv':
+                self._data = self._read_csv(build_path(name))
+            elif file_format == 'pkl':
+                with open(build_path(name), 'rb') as input_file:
                     self._data = pickle.load(input_file)
             else:
                 raise ValueError("Неизвестный формат файла. Поддерживаются только .csv, .pkl")
-    def get_rows_by_number(self, start, stop=None, copy_table=True):
-        row_count = len(next(iter(self._data.values()))) if self._data else 0
+    def get_rows_by_number(self, start, stop=None, copy_table=False):
         if stop is None:
             stop = start + 1
-        if not (0 <= start <= stop <= row_count):
+        if not (0 <= start <= stop <= self.row_count):
             raise IndexError("Недопустимый диапазон строк")
         result = {}
         for column_name, column_values in self._data.items():
             result[column_name] = column_values[start:stop]
         if copy_table:
-            return Table(result)   
-        else:
-            self._data = result
-            return self._data
-    def get_rows_by_index(self, *vals, copy_table=True):
+            return Table(result)
+        return self._make_view(result, range(start, stop))
+    def get_rows_by_index(self, *vals, copy_table=False):
+        if not self._data:
+            raise ValueError("Таблица пуста")
+        first_column = next(iter(self._data.values()))
         result = {}
         for column_name in self._data.keys():
             result[column_name] = []
-        found = 0
+        row_indices = []
         for search_value in vals:
-            column_values = list(self._data.values())
-            for row_index in range(len(column_values[0])):
-                if column_values[0][row_index] == search_value:
+            for row_index in range(self.row_count):
+                if first_column[row_index] == search_value:
+                    row_indices.append(row_index)
                     for column_name, values in self._data.items():
                         result[column_name].append(values[row_index])
-                        found = 1
-        if found == 0:
+        if not row_indices:
             raise ValueError("Указанные значения не найдены в первом столбце таблицы")
         if copy_table:
             return Table(result)
-        else:
-            self._data = result
-            return self._data
+        return self._make_view(result, row_indices)
     def get_column_types(self, by_number=True):
         column_types = {}
         for column_name, column_values in self._data.items():
@@ -352,7 +356,7 @@ class Table:
             try:
                 self._data[column_name] = [None if value is None else TYPE_CONVERTERS[column_type](value) for value in self._data[column_name]]
             except (TypeError, ValueError, OverflowError) as error:
-                raise TypeError("Невозможно привести данные столбца к указанному типу")
+                raise TypeError("Невозможно привести данные столбца к указанному типу") from error
     def get_values(self, column=0):
         if isinstance(column, str):
             if not self._data[column]:
@@ -383,43 +387,57 @@ class Table:
         if converter_func is None:
             raise ValueError(f"Неподдерживаемый тип данных: {column_type}")
         try:
-            self._data[column_name] = [None if value is None else converter_func(value) for value in values]
-        except (TypeError, ValueError):
-            raise TypeError("Невозможно привести данные столбца к указанному типу")
+            converted = [None if value is None else converter_func(value) for value in values]
+        except (TypeError, ValueError, OverflowError) as error:
+            raise TypeError("Невозможно привести данные столбца к указанному типу") from error
+        self._write_column(column_name, converted)
     def set_value(self, value, column=0):
         self.set_values([value], column)
     def concat(self, table):
-        if self._data.keys() == table.keys():
-            for column_name in self._data.keys():
-                self._data[column_name].extend(table[column_name])
-        else:
+        if not isinstance(table, Table):
+            raise TypeError("table должен быть объектом Table")
+        if self._data.keys() != table._data.keys():
             raise ValueError("Невозможно объединить таблицы: не совпадают имена колонок")
-        return self._data
+        for column_name in self._data:
+            self._data[column_name].extend(table._data[column_name])
+        return self
     def split(self, row_number):
+        if not isinstance(row_number, int) or not (0 <= row_number <= self.row_count):
+            raise IndexError("Недопустимый номер строки для разбиения")
         first_part = {}
         second_part = {}
         for column_name, column_values in self._data.items():
             first_part[column_name] = column_values[:row_number]
             second_part[column_name] = column_values[row_number:]
-        return first_part, second_part
-    def _binop(self, a, b, op):
+        return Table(first_part), Table(second_part)
+    def _binop(self, a, b, op, numeric_only=False):
         if a not in self._data or b not in self._data:
             raise KeyError("Столбец не найден")
+        if numeric_only:
+            column_types = self.get_column_types(by_number=False)
+            for column_name in (a, b):
+                if column_types[column_name] not in ('int', 'float', 'bool'):
+                    raise TypeError(
+                        f"Столбец {column_name} имеет тип {column_types[column_name]}, "
+                        f"арифметические операции допустимы только для int, float, bool"
+                    )
         result = []
         for row_index, (x, y) in enumerate(zip(self._data[a], self._data[b])):
             try:
                 result.append(op(x, y))
-            except TypeError:
-                raise TypeError(f"Операция не применима к данным в строке {row_index}")
+            except ZeroDivisionError as error:
+                raise ZeroDivisionError(f"Деление на ноль в строке {row_index}") from error
+            except TypeError as error:
+                raise TypeError(f"Операция не применима к данным в строке {row_index}") from error
         return result
     def add(self, a, b):
-        return self._binop(a, b, operator.add)
+        return self._binop(a, b, operator.add, numeric_only=True)
     def sub(self, a, b):
-        return self._binop(a, b, operator.sub)
+        return self._binop(a, b, operator.sub, numeric_only=True)
     def mul(self, a, b):
-        return self._binop(a, b, operator.mul)
+        return self._binop(a, b, operator.mul, numeric_only=True)
     def div(self, a, b):
-        return self._binop(a, b, operator.truediv)
+        return self._binop(a, b, operator.truediv, numeric_only=True)
     def eq(self, a, b):
         return self._binop(a, b, operator.eq)
     def ne(self, a, b):
@@ -433,24 +451,24 @@ class Table:
     def le(self, a, b):
         return self._binop(a, b, operator.le)
     def filter_rows(self, bool_list, copy_table=False):
-        total_rows = len(list(self._data.values())[0]) if self._data else 0
-        if len(bool_list) != total_rows:
+        if len(bool_list) != self.row_count:
             raise ValueError("Длина bool_list не совпадает с количеством строк таблицы")
         result = {}
         for column_name in self._data.keys():
             result[column_name] = []
+        row_indices = []
         for row_index in range(len(bool_list)):
-            if bool_list[row_index] == True:
+            if bool_list[row_index]:
+                row_indices.append(row_index)
                 for column_name, column_values in self._data.items():
                     result[column_name].append(column_values[row_index])
-        if copy_table == True:
-            return result
-        else:
-            self._data = result
-            return self._data
+        if copy_table:
+            return Table(result)
+        return self._make_view(result, row_indices)
     def merge_tables(self, table, by_number=True):
-        if not isinstance(table, dict):
-            raise TypeError("table должен быть словарём")
+        if not isinstance(table, Table):
+            raise TypeError("table должен быть объектом Table")
+        table = table._data
         if not self._data or not table:
             raise ValueError("Таблицы не должны быть пустыми")
         self_lengths = {len(values) for values in self._data.values()}
@@ -488,6 +506,8 @@ class Table:
                     continue
                 merged_data[column_name] = [values[table_row] for _, table_row in matched_rows]
             self._data = merged_data
-        return self._data
+        return self
     def __str__(self):
         return self.format()
+    def print_table(self):
+        print(self)
